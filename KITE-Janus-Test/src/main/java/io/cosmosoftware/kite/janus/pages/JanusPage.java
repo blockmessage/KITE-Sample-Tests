@@ -263,7 +263,7 @@ public class JanusPage extends BasePage {
   public List<String> getRemoteVideoIdList() {
     List<String> remoteIdList = new ArrayList<String>();
     for (int i : remoteUserIndexList) {
-      remoteIdList.add("remotevideo" + i);
+      remoteIdList.add("remotevideo" + i + "-1");
     }
     return remoteIdList;
   }
