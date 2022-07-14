@@ -24,9 +24,9 @@ public class JanusVideoRoomTest extends KiteBaseTest {
   public void populateTestSteps(TestRunner runner) {
     try {
       String userName = "user" + TestUtils.idToString(runner.getId());
-
       final JanusPage janusPage = new JanusPage(runner);
-      runner.addStep(new StartDemoStep(runner, this.url));
+      String room = "" + (runner.getId() / getMaxUsersPerRoom() + 1);
+      runner.addStep(new StartDemoStep(runner, this.url + "?room="+room));
       //find a way to have no more than 6 user per room with the room manager(flag?) or accept the pop up if there is too many users in the room
       runner.addStep(new JoinVideoRoomStep(runner, userName, janusPage));
       if(janusPage.getRegistrationState()){
