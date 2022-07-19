@@ -12,6 +12,7 @@ import io.cosmosoftware.kite.report.Status;
 import io.cosmosoftware.kite.steps.ScreenshotStep;
 import io.cosmosoftware.kite.steps.WaitForOthersStep;
 import io.cosmosoftware.kite.util.TestUtils;
+import io.cosmosoftware.kite.steps.TestStep;
 import org.webrtc.kite.tests.KiteBaseTest;
 import org.webrtc.kite.tests.TestRunner;
 
@@ -20,6 +21,7 @@ import static org.webrtc.kite.Utils.getStackTrace;
 public class JanusVideoRoomTest extends KiteBaseTest {
 
   protected boolean sfu = false;
+  private static int timeout = 300;
   @Override
   public void populateTestSteps(TestRunner runner) {
     try {
@@ -30,15 +32,15 @@ public class JanusVideoRoomTest extends KiteBaseTest {
       //find a way to have no more than 6 user per room with the room manager(flag?) or accept the pop up if there is too many users in the room
       runner.addStep(new JoinVideoRoomStep(runner, userName, janusPage));
       if(janusPage.getRegistrationState()){
-        runner.addStep(new WaitForOthersStep(runner, this, runner.getLastStep()));
+        runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
 
         runner.addStep(new FirstVideoCheck(runner));
         runner.addStep(new AllVideoCheck(runner, getMaxUsersPerRoom(), janusPage));
-        runner.addStep(new WaitForOthersStep(runner, this, runner.getLastStep()));
+        runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
 
         if (this.getStats()) {
           runner.addStep(new GetStatsStep(runner, getStatsConfig, sfu, janusPage));
-          runner.addStep(new WaitForOthersStep(runner, this, runner.getLastStep()));
+          runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
         }
 
         if (this.takeScreenshotForEachTest()) {
@@ -54,6 +56,13 @@ public class JanusVideoRoomTest extends KiteBaseTest {
       logger.error(getStackTrace(e));
     }
   }
+
+  private WaitForOthersStep WaitForOthersStep(TestRunner runner, JanusVideoRoomTest stepSynchronizer,
+      TestStep stepToWaitFor) {
+        WaitForOthersStep w = new WaitForOthersStep(runner, stepSynchronizer, stepToWaitFor);
+        w.setTimeout(timeout);
+        return w;
+      }
 
   @Override
   public void payloadHandling () {
