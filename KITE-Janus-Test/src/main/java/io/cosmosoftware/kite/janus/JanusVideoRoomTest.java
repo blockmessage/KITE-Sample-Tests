@@ -7,6 +7,7 @@ import io.cosmosoftware.kite.janus.pages.JanusPage;
 import io.cosmosoftware.kite.janus.steps.GetStatsStep;
 import io.cosmosoftware.kite.janus.steps.LeaveDemoStep;
 import io.cosmosoftware.kite.janus.steps.StartDemoStep;
+import io.cosmosoftware.kite.janus.steps.WaitStep;
 import io.cosmosoftware.kite.janus.steps.videoroom.JoinVideoRoomStep;
 import io.cosmosoftware.kite.report.Status;
 import io.cosmosoftware.kite.steps.ScreenshotStep;
@@ -28,6 +29,7 @@ public class JanusVideoRoomTest extends KiteBaseTest {
       String userName = "user" + TestUtils.idToString(runner.getId());
       final JanusPage janusPage = new JanusPage(runner);
       String room = "" + (runner.getId() / getMaxUsersPerRoom() + 1);
+      runner.addStep(new WaitStep(runner, runner.getId() * 100));
       runner.addStep(new StartDemoStep(runner, this.url + "?room="+room));
       //find a way to have no more than 6 user per room with the room manager(flag?) or accept the pop up if there is too many users in the room
       runner.addStep(new JoinVideoRoomStep(runner, userName, janusPage));
@@ -38,6 +40,11 @@ public class JanusVideoRoomTest extends KiteBaseTest {
         runner.addStep(new AllVideoCheck(runner, getMaxUsersPerRoom(), janusPage));
         runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
 
+        if (this.takeScreenshotForEachTest()) {
+          runner.addStep(new ScreenshotStep(runner));
+          runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
+        }
+
         if (this.getStats()) {
           runner.addStep(new GetStatsStep(runner, getStatsConfig, sfu, janusPage));
           runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
@@ -45,7 +52,10 @@ public class JanusVideoRoomTest extends KiteBaseTest {
 
         if (this.takeScreenshotForEachTest()) {
           runner.addStep(new ScreenshotStep(runner));
+          runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
         }
+
+        runner.addStep(new WaitStep(runner, 5000 + (getTupleSize() - runner.getId()) * 200));
 
         runner.addStep(new LeaveDemoStep(runner));
       }else{
@@ -62,7 +72,11 @@ public class JanusVideoRoomTest extends KiteBaseTest {
         WaitForOthersStep w = new WaitForOthersStep(runner, stepSynchronizer, stepToWaitFor);
         w.setTimeout(timeout);
         return w;
-      }
+  }
+
+  private Integer getTupleSize() {
+    return this.testConfig.getTupleSize();
+  }
 
   @Override
   public void payloadHandling () {
