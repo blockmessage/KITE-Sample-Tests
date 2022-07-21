@@ -28,6 +28,7 @@ public class JanusVideoRoomTest extends KiteBaseTest {
   private static int firstRoomId = 1;
   private static int startIntervalRandomRange = 1000;
   private static int startInterval = 500;
+  private static int joinRoomWaitTime = 10000;
 
   @Override
   public void populateTestSteps(TestRunner runner) {
@@ -41,7 +42,7 @@ public class JanusVideoRoomTest extends KiteBaseTest {
       runner.addStep(new JoinVideoRoomStep(runner, userName, janusPage));
       if(janusPage.getRegistrationState()){
         runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
-        runner.addStep(new WaitStep(runner, runner.getId() * startInterval + ThreadLocalRandom.current().nextInt(startIntervalRandomRange)));
+        runner.addStep(new WaitStep(runner, joinRoomWaitTime + runner.getId() * startInterval + ThreadLocalRandom.current().nextInt(startIntervalRandomRange)));
 
         runner.addStep(new FirstVideoCheck(runner));
         runner.addStep(new AllVideoCheck(runner, getMaxUsersPerRoom(), janusPage));
@@ -95,5 +96,6 @@ public class JanusVideoRoomTest extends KiteBaseTest {
     firstRoomId = payload.getInt("firstRoomId", 1);
     startIntervalRandomRange = payload.getInt("startIntervalRandomRange", 1000);
     startInterval = payload.getInt("startInterval", 500);
+    joinRoomWaitTime = payload.getInt("joinRoomWaitTime", 10000);
   }
 }
