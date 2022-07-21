@@ -24,12 +24,10 @@ import static org.webrtc.kite.Utils.getStackTrace;
 public class JanusVideoRoomTest extends KiteBaseTest {
 
   protected boolean sfu = false;
-  private static int timeout = 300;
+  private static int stepTimeout = 300;
   private static int firstRoomId = 1;
   private static int startIntervalRandomRange = 1000;
   private static int startInterval = 500;
-  private static int joinVideoRoomWaitTime = 20000;
-  private static int leaveWaitTime = 20000;
 
   @Override
   public void populateTestSteps(TestRunner runner) {
@@ -42,29 +40,31 @@ public class JanusVideoRoomTest extends KiteBaseTest {
       //find a way to have no more than 6 user per room with the room manager(flag?) or accept the pop up if there is too many users in the room
       runner.addStep(new JoinVideoRoomStep(runner, userName, janusPage));
       if(janusPage.getRegistrationState()){
-        //runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
+        runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
+        runner.addStep(new WaitStep(runner, runner.getId() * startInterval + ThreadLocalRandom.current().nextInt(startIntervalRandomRange)));
 
-        runner.addStep(new WaitStep(runner, joinVideoRoomWaitTime));
         runner.addStep(new FirstVideoCheck(runner));
         runner.addStep(new AllVideoCheck(runner, getMaxUsersPerRoom(), janusPage));
-        //runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
+        runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
+        runner.addStep(new WaitStep(runner, runner.getId() * startInterval + ThreadLocalRandom.current().nextInt(startIntervalRandomRange)));
 
         if (this.takeScreenshotForEachTest()) {
           runner.addStep(new ScreenshotStep(runner));
-          //runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
+          runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
+          runner.addStep(new WaitStep(runner, runner.getId() * startInterval + ThreadLocalRandom.current().nextInt(startIntervalRandomRange)));
         }
 
         if (this.getStats()) {
           runner.addStep(new GetStatsStep(runner, getStatsConfig, sfu, janusPage));
-          //runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
+          runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
+          runner.addStep(new WaitStep(runner, runner.getId() * startInterval + ThreadLocalRandom.current().nextInt(startIntervalRandomRange)));
         }
 
         if (this.takeScreenshotForEachTest()) {
           runner.addStep(new ScreenshotStep(runner));
-          //runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
+          runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
+          runner.addStep(new WaitStep(runner, runner.getId() * startInterval + ThreadLocalRandom.current().nextInt(startIntervalRandomRange)));
         }
-
-        runner.addStep(new WaitStep(runner, leaveWaitTime + (getTupleSize() - runner.getId()) * startInterval));
 
         runner.addStep(new LeaveDemoStep(runner));
       }else{
@@ -79,7 +79,7 @@ public class JanusVideoRoomTest extends KiteBaseTest {
   private WaitForOthersStep WaitForOthersStep(TestRunner runner, JanusVideoRoomTest stepSynchronizer,
       TestStep stepToWaitFor) {
         WaitForOthersStep w = new WaitForOthersStep(runner, stepSynchronizer, stepToWaitFor);
-        w.setTimeout(timeout);
+        w.setTimeout(stepTimeout);
         return w;
   }
 
@@ -91,10 +91,9 @@ public class JanusVideoRoomTest extends KiteBaseTest {
   public void payloadHandling () {
     super.payloadHandling();
     sfu = payload.getBoolean("sfu", false);
+    stepTimeout = payload.getInt("stepTimeout", 300);
     firstRoomId = payload.getInt("firstRoomId", 1);
     startIntervalRandomRange = payload.getInt("startIntervalRandomRange", 1000);
-    startInterval = payload.getInt("startInterval", 100);
-    joinVideoRoomWaitTime = payload.getInt("joinVideoRoomWaitTime", 20000);
-    leaveWaitTime = payload.getInt("leaveWaitTime", 20000);
+    startInterval = payload.getInt("startInterval", 500);
   }
 }
