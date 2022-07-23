@@ -24,11 +24,11 @@ import static org.webrtc.kite.Utils.getStackTrace;
 public class JanusVideoRoomTest extends KiteBaseTest {
 
   protected boolean sfu = false;
-  private static int stepTimeout = 300;
-  private static int firstRoomId = 1;
-  private static int startIntervalRandomRange = 1000;
-  private static int startInterval = 500;
-  private static int joinRoomWaitTime = 10000;
+  protected int stepTimeout = 1800;
+  protected int firstRoomId = 1;
+  protected int startIntervalRandomRange = 1000;
+  protected int startInterval = 500;
+  protected int startIntervalById = 0;
 
   @Override
   public void populateTestSteps(TestRunner runner) {
@@ -36,35 +36,42 @@ public class JanusVideoRoomTest extends KiteBaseTest {
       String userName = "user" + TestUtils.idToString(runner.getId());
       final JanusPage janusPage = new JanusPage(runner);
       String room = "" + (runner.getId() / getMaxUsersPerRoom() + firstRoomId);
-      runner.addStep(new WaitStep(runner, runner.getId() * startInterval + ThreadLocalRandom.current().nextInt(startIntervalRandomRange)));
+      waitRandom(runner);
       runner.addStep(new StartDemoStep(runner, this.url + "?room="+room));
       //find a way to have no more than 6 user per room with the room manager(flag?) or accept the pop up if there is too many users in the room
       runner.addStep(new JoinVideoRoomStep(runner, userName, janusPage));
       if(janusPage.getRegistrationState()){
-        runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
-        runner.addStep(new WaitStep(runner, joinRoomWaitTime + runner.getId() * startInterval + ThreadLocalRandom.current().nextInt(startIntervalRandomRange)));
+        runner.addStep(waitForOthersStep(runner, this, runner.getLastStep()));
+        waitRandom(runner);
 
         runner.addStep(new FirstVideoCheck(runner));
+        runner.addStep(waitForOthersStep(runner, this, runner.getLastStep()));
+        waitRandom(runner);
+
         runner.addStep(new AllVideoCheck(runner, getMaxUsersPerRoom(), janusPage));
-        runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
-        runner.addStep(new WaitStep(runner, runner.getId() * startInterval + ThreadLocalRandom.current().nextInt(startIntervalRandomRange)));
+        runner.addStep(waitForOthersStep(runner, this, runner.getLastStep()));
+        waitRandom(runner);
 
         if (this.takeScreenshotForEachTest()) {
-          runner.addStep(new ScreenshotStep(runner));
-          runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
-          runner.addStep(new WaitStep(runner, runner.getId() * startInterval + ThreadLocalRandom.current().nextInt(startIntervalRandomRange)));
+          ScreenshotStep screenshotStep = new ScreenshotStep(runner);
+          screenshotStep.setName(screenshotStep.getName() + "-before-get-stat");
+          runner.addStep(screenshotStep);
+          runner.addStep(waitForOthersStep(runner, this, runner.getLastStep()));
+          waitRandom(runner);
         }
 
         if (this.getStats()) {
           runner.addStep(new GetStatsStep(runner, getStatsConfig, sfu, janusPage));
-          runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
-          runner.addStep(new WaitStep(runner, runner.getId() * startInterval + ThreadLocalRandom.current().nextInt(startIntervalRandomRange)));
+          runner.addStep(waitForOthersStep(runner, this, runner.getLastStep()));
+          waitRandom(runner);
         }
 
         if (this.takeScreenshotForEachTest()) {
-          runner.addStep(new ScreenshotStep(runner));
-          runner.addStep(WaitForOthersStep(runner, this, runner.getLastStep()));
-          runner.addStep(new WaitStep(runner, runner.getId() * startInterval + ThreadLocalRandom.current().nextInt(startIntervalRandomRange)));
+          ScreenshotStep screenshotStep = new ScreenshotStep(runner);
+          screenshotStep.setName(screenshotStep.getName() + "-after-get-stat");
+          runner.addStep(screenshotStep);
+          runner.addStep(waitForOthersStep(runner, this, runner.getLastStep()));
+          waitRandom(runner);
         }
 
         runner.addStep(new LeaveDemoStep(runner));
@@ -77,13 +84,16 @@ public class JanusVideoRoomTest extends KiteBaseTest {
     }
   }
 
-  private WaitForOthersStep WaitForOthersStep(TestRunner runner, JanusVideoRoomTest stepSynchronizer,
+  private WaitForOthersStep waitForOthersStep(TestRunner runner, JanusVideoRoomTest stepSynchronizer,
       TestStep stepToWaitFor) {
         WaitForOthersStep w = new WaitForOthersStep(runner, stepSynchronizer, stepToWaitFor);
         w.setTimeout(stepTimeout);
         return w;
   }
 
+  private void waitRandom(TestRunner runner) {
+    runner.addStep(new WaitStep(runner, runner.getId() * startIntervalById + startInterval + ThreadLocalRandom.current().nextInt(startIntervalRandomRange)));
+  }
   private Integer getTupleSize() {
     return this.testConfig.getTupleSize();
   }
@@ -92,10 +102,10 @@ public class JanusVideoRoomTest extends KiteBaseTest {
   public void payloadHandling () {
     super.payloadHandling();
     sfu = payload.getBoolean("sfu", false);
-    stepTimeout = payload.getInt("stepTimeout", 300);
+    stepTimeout = payload.getInt("stepTimeout", 1800);
     firstRoomId = payload.getInt("firstRoomId", 1);
     startIntervalRandomRange = payload.getInt("startIntervalRandomRange", 1000);
     startInterval = payload.getInt("startInterval", 500);
-    joinRoomWaitTime = payload.getInt("joinRoomWaitTime", 10000);
+    startIntervalById = payload.getInt("startIntervalById", 0);
   }
 }
